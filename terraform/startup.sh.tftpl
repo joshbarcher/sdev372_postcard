@@ -5,9 +5,22 @@ set -euo pipefail
 # more than once, and a startup script that only works the first time is a
 # machine you cannot rebuild.
 
-if ! command -v node >/dev/null; then
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -y
+apt-get install -y git curl ca-certificates
+
+# api/package.json declares "node": ">=22", and Debian 12 ships 18. Asking
+# only whether node EXISTS would accept 18 on a machine that already had it,
+# npm install would succeed, and the service would fail at start with a version
+# error -- so ask which node, not whether.
+need_node=1
+if command -v node >/dev/null; then
+  major=$(node -v | sed 's/^v//' | cut -d. -f1)
+  if [ "$major" -ge 22 ]; then need_node=0; fi
+fi
+if [ "$need_node" -eq 1 ]; then
   curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-  apt-get install -y nodejs git
+  apt-get install -y nodejs
 fi
 
 id postcard >/dev/null 2>&1 || useradd --system --create-home --home-dir /opt/postcard postcard

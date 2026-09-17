@@ -31,9 +31,20 @@ Run `apply` twice and the second says `No changes`. That is the difference
 between a script and a description: a script does the steps again, a
 description notices there is nothing to do.
 
-Change `machine_type` to `e2-small` and plan again. It will tell you the machine
-must be **destroyed and recreated** — some fields can be updated in place and
-some cannot, and plan is where you find out rather than halfway through.
+Change `machine_type` to `e2-small` and plan again. Plan reports an **update in
+place**, not a new machine. Then `apply` fails — resizing means stopping the
+machine, and the provider will not stop a running one unless the file says it
+may:
+
+    allow_stopping_for_update = true
+
+Change the machine's `name` instead and plan says something else entirely: it
+**must be replaced**, destroyed and created again.
+
+So changes come in three kinds, not two: in place, in place but only while
+stopped, and not at all. Plan shows you the first and the third plainly. It does
+not show you the second — which is worth meeting here, on a machine you are
+about to destroy anyway, rather than on one you cared about.
 
 ## What is actually in here
 
