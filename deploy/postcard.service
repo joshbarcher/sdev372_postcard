@@ -1,0 +1,33 @@
+# /etc/systemd/system/postcard.service
+#
+# Replace USER with your account name. The path is where you cloned this repo
+# plus /api -- systemd will not expand ~, so it has to be written out.
+#
+#   sudo cp deploy/postcard.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now postcard
+#   systemctl status postcard
+
+[Unit]
+Description=Postcard API
+After=network.target
+
+[Service]
+WorkingDirectory=/home/USER/postcard/api
+ExecStart=/usr/bin/node src/server.js
+Environment=PORT=8080
+
+# The secrets are NOT in this file. This file is world-readable -- 0644, owned
+# by root, and anyone on the machine can cat it. EnvironmentFile points at one
+# that is not.
+EnvironmentFile=-/etc/postcard.env
+
+# Restart=always is what makes this a service rather than something you started
+# once. Kill the process and systemd puts it back in two seconds; reboot the
+# machine and it comes back on its own.
+Restart=always
+RestartSec=2
+User=USER
+
+[Install]
+WantedBy=multi-user.target
