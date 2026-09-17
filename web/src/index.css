@@ -1,0 +1,49 @@
+:root {
+	--ink: #2b2e33;
+	--paper: #f5f3ef;
+	--line: #d8d3c8;
+	--accent: #c96f4a;
+	--muted: #7d7669;
+	color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+body {
+	margin: 0;
+	background: var(--paper);
+	color: var(--ink);
+	font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.wrap { max-width: 44rem; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+.head { display: flex; align-items: baseline; gap: .75rem; border-bottom: 2px solid var(--ink); padding-bottom: .5rem; }
+.head h1 { margin: 0; font-size: 2rem; letter-spacing: -.02em; }
+.sub { margin: 0; color: var(--muted); }
+
+.send { display: grid; grid-template-columns: 10rem 1fr auto; gap: .5rem; margin: 1.25rem 0; }
+.send input { padding: .6rem .7rem; border: 1px solid var(--line); border-radius: .4rem; background: #fff; font: inherit; }
+.send input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.send button { padding: .6rem 1.1rem; border: 0; border-radius: .4rem; background: var(--ink); color: var(--paper); font: inherit; cursor: pointer; }
+.send button:disabled { background: var(--line); color: var(--muted); cursor: not-allowed; }
+
+.error { margin: 0 0 1rem; padding: .6rem .8rem; border-left: 3px solid var(--accent); background: #fff; color: var(--accent); }
+
+.cards { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
+.card {
+	display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;
+	background: #fff; border: 1px solid var(--line); border-radius: .5rem;
+	padding: .9rem 1rem; box-shadow: 0 1px 0 rgba(0,0,0,.04);
+}
+.card strong { font-size: 1.05rem; }
+.card p { margin: .25rem 0 .4rem; }
+.card time { color: var(--muted); font-size: .8rem; }
+.empty { color: var(--muted); font-style: italic; padding: 1.5rem 0; }
+
+.remove { border: 1px solid var(--line); background: #fff; color: var(--muted); border-radius: .35rem; padding: .35rem .6rem; font: inherit; font-size: .85rem; cursor: pointer; }
+.remove:hover { border-color: var(--accent); color: var(--accent); }
+
+.foot { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 2rem; padding-top: .75rem; border-top: 1px solid var(--line); }
+.token { padding: .4rem .6rem; border: 1px solid var(--line); border-radius: .35rem; font: inherit; font-size: .85rem; width: 14rem; }
+.build { color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; }
