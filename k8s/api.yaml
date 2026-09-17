@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: postcard-api:1
+          image: sdev372/postcard-api:1
           ports:
             - containerPort: 8080
           env:

@@ -54,7 +54,7 @@ Scale, and see it is still one answer:
 
 Roll out a new version and watch it happen one pod at a time:
 
-    kubectl set image deployment/postcard-api api=postcard-api:2
+    kubectl set image deployment/postcard-api api=sdev372/postcard-api:2
     kubectl rollout status deployment/postcard-api
 
 Then put it back:
