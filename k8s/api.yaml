@@ -52,7 +52,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: postcard-api
+  # Named `api` because that is the hostname the front end asks for, and it is
+  # the same hostname it asked for under Compose. The Service name IS the DNS
+  # name -- which is the one idea this file exists to make concrete.
+  name: api
 spec:
   # ClusterIP: reachable inside the cluster, nowhere else. The front end talks
   # to it by name; nothing outside can.
