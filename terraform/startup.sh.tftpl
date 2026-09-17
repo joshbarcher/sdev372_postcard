@@ -9,19 +9,9 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get install -y git curl ca-certificates
 
-# api/package.json declares "node": ">=22", and Debian 12 ships 18. Asking
-# only whether node EXISTS would accept 18 on a machine that already had it,
-# npm install would succeed, and the service would fail at start with a version
-# error -- so ask which node, not whether.
-need_node=1
-if command -v node >/dev/null; then
-  major=$(node -v | sed 's/^v//' | cut -d. -f1)
-  if [ "$major" -ge 22 ]; then need_node=0; fi
-fi
-if [ "$need_node" -eq 1 ]; then
-  curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-  apt-get install -y nodejs
-fi
+# Debian 13 ships Node 20.19.2 and api/package.json asks for >=20, so the
+# distribution package is the whole story -- same one line week 4 runs by hand.
+apt-get install -y nodejs npm
 
 id postcard >/dev/null 2>&1 || useradd --system --create-home --home-dir /opt/postcard postcard
 
