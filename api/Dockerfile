@@ -1,7 +1,7 @@
-# node:22-slim, not :latest and not the full image. A tag that moves is a build
+# node:20-slim, not :latest and not the full image. A tag that moves is a build
 # that is not reproducible, and the full image is ~1 GB of things this app never
 # calls.
-FROM node:22-slim
+FROM node:20-slim
 
 WORKDIR /app
 
