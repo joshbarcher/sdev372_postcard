@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: postcard-web:1
+          image: sdev372/postcard-web:1
           ports:
             - containerPort: 80
           resources:
