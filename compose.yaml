@@ -1,0 +1,49 @@
+# Everything week 4 built by hand, as one file.
+#
+#   cp .env.example .env      # then edit it
+#   docker compose up --build
+#
+# The page is on http://localhost:8080. The API is NOT published -- only the
+# web container can reach it, over the network compose makes.
+
+services:
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: mysql://postcard:${DB_PASSWORD}@db:3306/postcard
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+      APP_VERSION: ${APP_VERSION:-1.0.0}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./web
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  db:
+    image: mariadb:11.8
+    environment:
+      MARIADB_ROOT_PASSWORD: ${ROOT_PASSWORD}
+      MARIADB_DATABASE: postcard
+      MARIADB_USER: postcard
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    # A named volume, not a bind mount. Without it, `docker compose down`
+    # takes every postcard with it -- the containers are disposable and the
+    # data must not be.
+    volumes:
+      - postcard-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      retries: 12
+    restart: unless-stopped
+
+volumes:
+  postcard-data:
