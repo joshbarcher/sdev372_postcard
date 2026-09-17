@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postcard-web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: postcard-web
+  template:
+    metadata:
+      labels:
+        app: postcard-web
+    spec:
+      containers:
+        - name: web
+          image: postcard-web:1
+          ports:
+            - containerPort: 80
+          resources:
+            requests: { cpu: 20m, memory: 32Mi }
+            limits: { cpu: 200m, memory: 128Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postcard-web
+spec:
+  # LoadBalancer: this is the ONE thing in the cluster with an address the
+  # outside world can reach. Everything else is ClusterIP on purpose.
+  type: LoadBalancer
+  selector:
+    app: postcard-web
+  ports:
+    - port: 80
+      targetPort: 80

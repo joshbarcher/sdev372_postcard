@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postcard-api
+spec:
+  # Two, so that "one of them died" is something you can watch rather than
+  # something you are told about.
+  replicas: 2
+  selector:
+    matchLabels:
+      app: postcard-api
+  template:
+    metadata:
+      labels:
+        app: postcard-api
+    spec:
+      containers:
+        - name: api
+          image: postcard-api:1
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postcard
+                  key: DATABASE_URL
+            - name: ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: postcard
+                  key: ADMIN_TOKEN
+            - name: APP_VERSION
+              value: "1.0.0"
+          # Two probes, because the cluster asks two different questions.
+          # liveness:  is this wedged? restart it.
+          # readiness: should traffic come here yet? a pod is alive long before
+          #            it can reach the database, and sending traffic in that
+          #            window is where the 502s on a rolling update come from.
+          livenessProbe:
+            httpGet: { path: /health, port: 8080 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: /ready, port: 8080 }
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { cpu: 500m, memory: 256Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postcard-api
+spec:
+  # ClusterIP: reachable inside the cluster, nowhere else. The front end talks
+  # to it by name; nothing outside can.
+  type: ClusterIP
+  selector:
+    app: postcard-api
+  ports:
+    - port: 8080
+      targetPort: 8080
