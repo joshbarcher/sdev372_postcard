@@ -12,6 +12,11 @@ run it — only what it should look like when it is running.
       --from-literal=DATABASE_URL=mysql://postcard:pick-one@postcard-db:3306/postcard
 
     kubectl apply -f k8s/
+
+`k8s/examples/` is deliberately NOT applied by that command -- `apply -f` on a
+directory does not recurse. The example Secret in there carries the same
+metadata.name as the real one, so applying it would quietly replace the password
+you chose with `s3cr3t` and nothing would error.
     kubectl get pods -w
 
 Then find the address:
