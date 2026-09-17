@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Runs as root on first boot. Idempotent on purpose -- a machine may run this
+# more than once, and a startup script that only works the first time is a
+# machine you cannot rebuild.
+
+if ! command -v node >/dev/null; then
+  curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+  apt-get install -y nodejs git
+fi
+
+id postcard >/dev/null 2>&1 || useradd --system --create-home --home-dir /opt/postcard postcard
+
+if [ ! -d /opt/postcard/app/.git ]; then
+  git clone --branch ${branch} ${repo_url} /opt/postcard/app
+else
+  git -C /opt/postcard/app fetch --all && git -C /opt/postcard/app checkout ${branch} && git -C /opt/postcard/app pull
+fi
+chown -R postcard:postcard /opt/postcard
+sudo -u postcard bash -lc 'cd /opt/postcard/app/api && npm install --omit=dev'
+
+# The secrets file, 0600, root-owned -- exactly as it was written by hand.
+cat > /etc/postcard.env <<ENV
+ADMIN_TOKEN=${admin_token}
+APP_VERSION=1.0.0
+NODE_ENV=production
+ENV
+chmod 600 /etc/postcard.env
+
+cat > /etc/systemd/system/postcard.service <<UNIT
+[Unit]
+Description=Postcard API
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/postcard/app/api
+ExecStart=/usr/bin/node src/server.js
+Environment=PORT=8080
+EnvironmentFile=-/etc/postcard.env
+Restart=always
+RestartSec=2
+User=postcard
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+systemctl daemon-reload
+systemctl enable --now postcard
