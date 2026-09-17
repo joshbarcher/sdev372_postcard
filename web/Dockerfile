@@ -1,7 +1,7 @@
 # Two stages. The first has node, npm and every dev dependency; the second has
 # nginx and the built files. Only the second is shipped -- about 50 MB instead
 # of about 400.
-FROM node:22-slim AS build
+FROM node:20-slim AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
