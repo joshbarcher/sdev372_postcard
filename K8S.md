@@ -9,7 +9,7 @@ run it — only what it should look like when it is running.
       --from-literal=ADMIN_TOKEN=pick-one \
       --from-literal=DB_PASSWORD=pick-one \
       --from-literal=ROOT_PASSWORD=pick-one \
-      --from-literal=DATABASE_URL=mysql://postcard:pick-one@postcard-db:3306/postcard
+      --from-literal=DATABASE_URL=mysql://postcard:pick-one@db:3306/postcard
 
     kubectl apply -f k8s/
 
