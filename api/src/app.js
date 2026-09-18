@@ -1,3 +1,4 @@
+import { hostname } from 'node:os';
 import express from 'express';
 import cors from 'cors';
 import { createMemoryStore } from './store.js';
@@ -41,6 +42,10 @@ export function createApp({ store = createMemoryStore() } = {}) {
 			version: process.env.APP_VERSION ?? 'dev',
 			env: process.env.NODE_ENV ?? 'development',
 			store: store.kind,
+			// Which copy answered. On one machine it is noise; on a cluster with
+			// several replicas it is the only way to see that the address in
+			// front of them is doing its job.
+			instance: hostname(),
 			// NEVER the value. A config endpoint that prints its own secrets is
 			// how a token ends up in a screenshot, and this one is on a slide.
 			adminTokenSet: Boolean(process.env.ADMIN_TOKEN)
@@ -97,7 +102,8 @@ export function createApp({ store = createMemoryStore() } = {}) {
 	// A known 404, so a deck can show one without inventing a URL.
 	app.use((req, res) => res.status(404).json({ error: `no route for ${req.method} ${req.path}` }));
 
-	// eslint-disable-next-line no-unused-vars -- Express needs the 4-arg shape
+	// Four arguments on purpose: Express decides this is an ERROR handler by
+	// counting them. eslint.config.js knows, so no disable comment is needed.
 	app.use((err, req, res, next) => {
 		console.error(err);
 		res.status(500).json({ error: 'something went wrong' });
