@@ -14,7 +14,8 @@ sudo nano /etc/postcard.env              # set a real ADMIN_TOKEN
 sed "s/USER/$USER/g" ~/postcard/deploy/postcard.service \
   | sudo tee /etc/systemd/system/postcard.service >/dev/null
 sudo systemctl daemon-reload
-sudo systemctl enable --now postcard
+sudo systemctl start postcard      # run it now
+sudo systemctl enable postcard     # and again after a reboot
 ```
 
 Then check it, from the machine and from outside:
