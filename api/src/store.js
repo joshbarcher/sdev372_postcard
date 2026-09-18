@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 
 /**
  * Where the postcards live — and the whole point is that the app does not care.
@@ -110,6 +112,65 @@ export async function createMysqlStore(url) {
 /**
  * One environment variable decides. This is the only place that reads it.
  */
+// ── on disk ────────────────────────────────────────────────────────────────
+//
+// A third store, and it exists for one lesson: a bind mount claims that a
+// folder on your machine IS a folder inside the container, and the only way to
+// prove that is to edit the file yourself and watch the application change.
+// Set POSTCARD_DATA and the postcards live in that file.
+//
+// Deliberately not a database -- it is the smallest thing that makes a
+// directory worth mounting, and it keeps the week 4 lesson intact: without
+// DATABASE_URL nothing here survives a restart unless you gave it somewhere
+// to write.
+function createFileStore(file) {
+	const load = () => {
+		try {
+			const rows = JSON.parse(readFileSync(file, 'utf8'));
+			return Array.isArray(rows) ? rows : [];
+		} catch {
+			// No file yet, or somebody edited it by hand and got it wrong. An
+			// empty board is the right answer either way, and the next write fixes
+			// the file -- this store must never be the reason the app will not boot.
+			return [];
+		}
+	};
+	let rows = load();
+	const save = () => {
+		mkdirSync(dirname(file), { recursive: true });
+		writeFileSync(file, JSON.stringify(rows, null, 2));
+	};
+
+	return {
+		kind: 'file',
+		async ready() {
+			return true;
+		},
+		async all() {
+			// Re-read every time, because the whole point is that something
+			// OUTSIDE this process -- you, in an editor -- can change it.
+			rows = load();
+			return rows.map(card);
+		},
+		async add({ place, message }) {
+			const row = { id: randomUUID(), place, message, sentAt: new Date().toISOString() };
+			rows = [row, ...load()];
+			save();
+			return card(row);
+		},
+		async remove(id) {
+			rows = load();
+			const before = rows.length;
+			rows = rows.filter((r) => r.id !== id);
+			save();
+			return rows.length < before;
+		},
+		async close() {}
+	};
+}
+
 export async function createStore({ url = process.env.DATABASE_URL } = {}) {
-	return url ? createMysqlStore(url) : createMemoryStore();
+	if (url) return createMysqlStore(url);
+	const file = process.env.POSTCARD_DATA;
+	return file ? createFileStore(file) : createMemoryStore();
 }
