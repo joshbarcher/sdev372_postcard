@@ -11,7 +11,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: db
+  name: postcard-db
 spec:
   # ONE. Not two. Two MariaDB pods on one ReadWriteOnce volume is data
   # corruption, not high availability -- scaling a database is a different
