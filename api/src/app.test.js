@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import request from 'supertest';
 import { createApp } from './app.js';
 import { createMemoryStore } from './store.js';
@@ -75,6 +75,31 @@ describe('postcards', () => {
 		expect(res.body[0]).toHaveProperty('sentAt');
 	});
 
+	it('answers 201 with the postcard it made', async () => {
+		const res = await post({ place: 'Oslo', message: 'Cold. Bright.' });
+		expect(res.status).toBe(201);
+		expect(res.body.place).toBe('Oslo');
+		expect(res.body).toHaveProperty('id');
+	});
+
+	it('is stamped when it was made', async () => {
+		const before = Date.now();
+		const res = await post({ place: 'Oslo', message: 'Hi' });
+
+		const at = res.body.sentAt;
+		expect(at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+
+		const ms = Date.parse(at);
+		expect(ms).toBeGreaterThanOrEqual(before);
+		expect(ms).toBeLessThanOrEqual(Date.now());
+	});
+
+	it('sends JSON that a browser on any origin may read', async () => {
+		const res = await request(app).get('/api/postcards');
+		expect(res.headers['content-type']).toMatch(/json/);
+		expect(res.headers['access-control-allow-origin']).toBe('*');
+	});
+
 	it('rejects a postcard with no place or no message', async () => {
 		for (const body of [{}, { place: 'Oslo' }, { message: 'hi' }, { place: '  ', message: 'hi' }]) {
 			const res = await post(body);
@@ -111,6 +136,35 @@ describe('DELETE /api/postcards/:id', () => {
 		delete process.env.ADMIN_TOKEN;
 		const res = await request(app).delete('/api/postcards/whatever');
 		expect(res.status).toBe(503);
+	});
+});
+
+/**
+ * Test doubles at the two seams Postcard really has: the store, and the clock.
+ */
+describe('test doubles', () => {
+	afterEach(() => {
+		vi.restoreAllMocks();
+		vi.useRealTimers();
+	});
+
+	it('stores the postcard trimmed', async () => {
+		const add = vi.spyOn(store, 'add');
+		await post({ place: '  Oslo ', message: ' Cold. ' });
+		expect(add).toHaveBeenCalledWith({ place: 'Oslo', message: 'Cold.' });
+	});
+
+	it('never stores a postcard it rejected', async () => {
+		const add = vi.spyOn(store, 'add');
+		await post({ place: 'Oslo' });
+		expect(add).not.toHaveBeenCalled();
+	});
+
+	it('stamps the time the clock says', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] });
+		vi.setSystemTime(new Date('2026-11-18T17:00:00Z'));
+		const res = await post({ place: 'Oslo', message: 'Hi' });
+		expect(res.body.sentAt).toBe('2026-11-18T17:00:00.000Z');
 	});
 });
 
