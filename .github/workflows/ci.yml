@@ -1,0 +1,54 @@
+# The two commands you have been typing since week 6, run by a machine.
+#
+# `docker build` and `docker push` are the same two. What changes is the tag:
+# by hand you pushed :1, and here it is the commit sha, because a machine has
+# something you do not -- it knows exactly which code it is holding.
+name: ci
+
+on:
+  push:
+    branches: [week-9]
+  pull_request:
+
+jobs:
+  # ONE job. Splitting lint and test into two would mean two machines, two
+  # `npm ci` installs and a `needs:` between them -- for a suite that runs in
+  # under a second. The course teaches `needs:` nowhere else.
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          # The major only. A patch pin goes stale silently, which is the same
+          # failure as a stale week number one file over.
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      # `ci`, not `install`. install will happily update the lock file to make
+      # a build work; ci fails instead, which is what you want from a machine
+      # nobody is watching.
+      - run: npm ci
+
+      - run: npm run lint
+
+      # No database, no TEST_DATABASE_URL, nothing to start first: the suite
+      # injects a store, so it runs anywhere. That is the property CI wants and
+      # the reason the tests were written that way.
+      - run: npm test
+
+      - name: Build and push
+        if: github.event_name == 'push'
+        env:
+          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin
+          docker build -t "$DOCKERHUB_USER/postcard-api:$GITHUB_SHA" .
+          docker push "$DOCKERHUB_USER/postcard-api:$GITHUB_SHA"

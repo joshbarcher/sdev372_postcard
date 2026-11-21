@@ -19,7 +19,15 @@ const host = process.env.HOST || '0.0.0.0';
 const store = await createStore();
 console.log(`postcard-api storing postcards in: ${store.kind}`);
 
-const server = createApp({ store }).listen(port, host, () => {
+// Express 5 passes this callback to the server's 'error' event too, so a port
+// already in use arrives here as err. Ignore it and the app reports that it is
+// listening, then exits 0 with nothing bound. Exit non-zero so pm2 and systemd
+// see a failed start, not a clean one.
+const server = createApp({ store }).listen(port, host, (err) => {
+	if (err) {
+		console.error(`postcard-api could not listen on ${host}:${port}: ${err.code}`);
+		process.exit(1);
+	}
 	console.log(`postcard-api listening on http://${host}:${port}`);
 });
 
