@@ -24,9 +24,9 @@ variable "repo_url" {
 }
 
 variable "branch" {
-  description = "Which branch the machine should run. week-4 is the hand-deployed shape."
+  description = "Which branch the machine should run."
   type        = string
-  default     = "week-4"
+  default     = "week-10"
 }
 
 variable "admin_token" {
