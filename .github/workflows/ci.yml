@@ -3,7 +3,6 @@ name: CI
 on:
   push:
     branches: [main]
-  workflow_dispatch:
 
 env:
   IMAGE: docker.io/you/postcard-api
