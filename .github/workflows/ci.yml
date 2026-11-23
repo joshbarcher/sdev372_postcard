@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 env:
-  IMAGE: docker.io/you/postcard-api
+  IMAGE: us-west1-docker.pkg.dev/<project>/postcard/api
 
 jobs:
   postcard:
@@ -21,16 +21,15 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
-      - uses: docker/login-action@v4
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - run: docker build -t $IMAGE:$GITHUB_SHA .
-      - run: docker push $IMAGE:$GITHUB_SHA
       - uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
       - uses: google-github-actions/setup-gcloud@v3
+      - run: |
+          gcloud auth configure-docker \
+            us-west1-docker.pkg.dev
+      - run: docker build -t $IMAGE:$GITHUB_SHA .
+      - run: docker push $IMAGE:$GITHUB_SHA
       - run: |
           gcloud run deploy postcard-api \
             --image $IMAGE:$GITHUB_SHA \
